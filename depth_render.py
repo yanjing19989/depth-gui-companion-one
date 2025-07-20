@@ -157,7 +157,7 @@ def run_hologram_render(
     # 翻转图像，因为OpenGL的Y轴原点在左下角，PIL的Y轴原点在左上角
     output_image = output_image.transpose(Image.FLIP_TOP_BOTTOM)
     
-    output_image.save(output_file)
+    output_image.save(output_file, compress_level=1)
     print(f"Rendered image saved to {output_file}")
 
     # --- 清理资源 ---
