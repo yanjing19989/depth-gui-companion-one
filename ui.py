@@ -1,12 +1,14 @@
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from PIL import Image
+from PIL import Image, ImageEnhance
 import os
 import cv2
 import torch
 import numpy as np
 from safetensors.torch import load_file
 from depth_anything_v2.dpt import DepthAnythingV2
+import yaml
+from depth_render import run_hologram_render
 
 def set_center(window, width=300, height=150):
     x = (window.winfo_screenwidth() - width) / 2
@@ -37,6 +39,9 @@ class ImageConverterApp(ctk.CTk):
         # 左侧源图像展示框
         left_frame = ctk.CTkFrame(self.tabview.tab("图像转换"), width=400, height=600)
         left_frame.grid(row=0, column=0, padx=20, pady=20)
+
+        source_image_preview_name = ctk.CTkLabel(left_frame, text="源图像")
+        source_image_preview_name.pack()
         
         self.source_image_preview = ctk.CTkLabel(left_frame, text="点击选择源图像", 
                                                  width=400, height=200, bg_color="#202020", font=("黑体", 16))
@@ -46,22 +51,40 @@ class ImageConverterApp(ctk.CTk):
         # 右侧目标图像展示框
         right_frame = ctk.CTkFrame(self.tabview.tab("图像转换"), width=400, height=600)
         right_frame.grid(row=0, column=1, padx=20, pady=20)
+
+        target_image_preview_name = ctk.CTkLabel(right_frame, text="深度图像")
+        target_image_preview_name.pack()
         
         self.target_image_preview = ctk.CTkLabel(right_frame, text="请先选择源图像", 
                                                  width=400, height=200, bg_color="#202020", font=("黑体", 16))
         self.target_image_preview.pack()
 
+        # 添加复选框
+        down_frame_batch = ctk.CTkFrame(self.tabview.tab("图像转换"), width=400, height=600)
+        down_frame_batch.grid(row=1, column=0, columnspan=2, padx=20, pady=20)
+        down_frame_batch.columnconfigure((0, 1, 2), weight=1)
+
+        self.enhance_var = ctk.BooleanVar(value=False)
+        enhance_checkbox = ctk.CTkCheckBox(down_frame_batch, text="增强图像饱和度", variable=self.enhance_var)
+        enhance_checkbox.grid(row=0, column=0, padx=5)
+        self.force_916 = ctk.BooleanVar(value=False)
+        force_916_checkbox = ctk.CTkCheckBox(down_frame_batch, text="强制9:16", variable=self.force_916)
+        force_916_checkbox.grid(row=0, column=1, padx=5)
+        self.save_interlaced_var = ctk.BooleanVar(value=False)
+        save_interlaced_checkbox = ctk.CTkCheckBox(down_frame_batch, text="生成交织图", variable=self.save_interlaced_var)
+        save_interlaced_checkbox.grid(row=0, column=2, padx=5)
+
         # 底部转换按钮
         convert_button = ctk.CTkButton(self.tabview.tab("图像转换"), text="转换", command=self.start_convert_image)
-        convert_button.grid(row=3, column=0, columnspan=2, pady=10)
+        convert_button.grid(row=4, column=0, columnspan=2, pady=10)
 
         # 滑条拖到选择数值
         self.slider = ctk.CTkSlider(self.tabview.tab("图像转换"), from_=378, to=840, number_of_steps=33, 
                                     command=lambda x: self.slide_label.configure(text=int(x)))
         self.slider.set(518)
-        self.slider.grid(row=1, column=0, columnspan=2)
+        self.slider.grid(row=2, column=0, columnspan=2)
         slide_label = ctk.CTkLabel(self.tabview.tab("图像转换"), text=int(self.slider.get()))
-        slide_label.grid(row=2, column=0, columnspan=2)
+        slide_label.grid(row=3, column=0, columnspan=2)
 
         self.source_image_path = None
         
@@ -77,7 +100,7 @@ class ImageConverterApp(ctk.CTk):
         if self.source_image_path:
             target_image_path = os.path.splitext(self.source_image_path)[0] + "_depth.png"
             # 处理图像
-            convert_image(self.source_image_path, target_image_path, input_size=int(self.slider.get()))
+            self.convert_image(self.source_image_path, target_image_path, input_size=int(self.slider.get()))
             # 显示目标图像
             image = Image.open(target_image_path)
             photo = ctk.CTkImage(image, size=(400, image.height * 400 // image.width))
@@ -145,7 +168,7 @@ class ImageConverterApp(ctk.CTk):
             self.progress_callback(0, 100)
             for file in os.listdir("tmp"):
                 file_path = os.path.join("tmp", file)
-                convert_image(file_path, file_path, input_size=int(self.video_slider.get()))
+                self.convert_image(file_path, file_path, input_size=int(self.video_slider.get()))
                 self.progressbar.step()
                 self.progressbar.update()
             
@@ -177,7 +200,6 @@ class ImageConverterApp(ctk.CTk):
             self.target_directory = directory
             self.target_dir_label.configure(text=directory)
 
-
     def start_convert_batch(self):
         if not self.source_directory:
             messagebox.showerror("错误", "请先选择源目录")
@@ -195,8 +217,8 @@ class ImageConverterApp(ctk.CTk):
         for file in os.listdir(self.source_directory):
             file_path = os.path.join(self.source_directory, file)
             if os.path.isfile(file_path) and file.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')):
-                target_file_path = os.path.join(self.target_directory, f"{os.path.splitext(file)[0]}_depth.png")
-                convert_image(file_path, target_file_path, input_size=int(self.batch_slider.get()))
+                target_file_path = os.path.join(self.target_directory, f"{os.path.splitext(file)[0]}_d.png")
+                self.convert_image(file_path, target_file_path, input_size=int(self.batch_slider.get()))
                 self.progressbar.step()
                 self.progressbar.update()
 
@@ -233,6 +255,18 @@ class ImageConverterApp(ctk.CTk):
         self.target_dir_label.pack()
         self.target_dir_label.bind("<Button-1>", self.select_target_directory)
 
+        # 添加复选框
+        down_frame_batch = ctk.CTkFrame(self.tabview.tab("批量转换"), width=400, height=600)
+        down_frame_batch.grid(row=1, column=0, columnspan=2, padx=20, pady=20)
+        down_frame_batch.columnconfigure((0, 1, 2), weight=1)
+
+        enhance_checkbox = ctk.CTkCheckBox(down_frame_batch, text="增强图像饱和度", variable=self.enhance_var)
+        enhance_checkbox.grid(row=0, column=0, padx=5)
+        force_916_checkbox = ctk.CTkCheckBox(down_frame_batch, text="强制9:16", variable=self.force_916)
+        force_916_checkbox.grid(row=0, column=1, padx=5)
+        save_interlaced_checkbox = ctk.CTkCheckBox(down_frame_batch, text="生成交织图", variable=self.save_interlaced_var)
+        save_interlaced_checkbox.grid(row=0, column=2, padx=5)
+
         # 底部转换按钮
         convert_batch_button = ctk.CTkButton(self.tabview.tab("批量转换"), text="转换", command=self.start_convert_batch)
         convert_batch_button.grid(row=4, column=0, columnspan=2, pady=10)
@@ -247,7 +281,6 @@ class ImageConverterApp(ctk.CTk):
 
         self.source_directory = None
 
-
     def show_progress_window(self):
         self.progress_window = ctk.CTkToplevel(self)
         self.progress_window.title("处理中")
@@ -258,7 +291,50 @@ class ImageConverterApp(ctk.CTk):
         self.progress_window.deiconify()
         self.progress_window.update()
 
-def convert_image(image_path, save_path, input_size=518):
+    def convert_image(self, image_path, save_path, input_size=518):
+        gen_depth_image(image_path, save_path, input_size)
+        if self.save_interlaced_var:
+            config = load_config_yaml("tools/depth_config.yaml")
+            if self.enhance_var or self.force_916:
+                image = Image.open(image_path)
+                if self.enhance_var:
+                    image = enhance_image(image)
+                if self.force_916:
+                    width, height = image.size
+                    # 计算9:16的目标高度
+                    target_height = int(width * 16 / 9)
+                    if target_height > height:
+                        # 如果目标高度大于原图高度，则以高度为基准，裁剪宽度
+                        target_width = int(height * 9 / 16)
+                        left = (width - target_width) // 2
+                        right = left + target_width
+                        top = 0
+                        bottom = height
+                        image = image.crop((left, top, right, bottom))
+                    else:
+                        # 以宽度为基准，裁剪高度
+                        top = (height - target_height) // 2
+                        bottom = top + target_height
+                        left = 0
+                        right = width
+                        image = image.crop((left, top, right, bottom))
+                image_path = 'tmp/' + os.path.basename(image_path)
+                image.save(image_path)
+            # 合并命令行参数覆盖yaml
+            params = dict(config)
+            params['image_file'] = image_path
+            params['depth_file'] = save_path
+            params['output_file'] = f"{os.path.splitext(save_path)[0]}_i.png"
+            run_hologram_render(**params)
+
+            
+def load_config_yaml(yaml_path):
+    if not os.path.exists(yaml_path):
+        return {}
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f)
+
+def gen_depth_image(image_path, save_path, input_size=518):
     raw_img = cv2.imdecode(np.fromfile(image_path,dtype=np.uint8),-1)
 
     depth = model.infer_image(raw_img, input_size) # HxW raw depth map in numpy
@@ -267,7 +343,7 @@ def convert_image(image_path, save_path, input_size=518):
 
     cv2.imencode('.png', depth_normalized)[1].tofile(save_path)
 
-def enhance_image(image, input_size=518):
+def enhance_image(image):
     # 提高image饱和度30%
     enhancer = ImageEnhance.Color(image)
     image = enhancer.enhance(1.3)
@@ -290,5 +366,13 @@ if __name__ == "__main__":
     model.load_state_dict(load_file(depth_path))
     model = model.to(DEVICE).eval().half()
 
+    if not os.path.exists('tmp'):
+        os.makedirs('tmp')
+
     app = ImageConverterApp()
     app.mainloop()
+
+    if os.path.exists('tmp'):
+        for file in os.listdir('tmp'):
+            os.remove(os.path.join('tmp', file))
+        os.rmdir('tmp')
