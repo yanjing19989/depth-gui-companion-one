@@ -292,14 +292,15 @@ class ImageConverterApp(ctk.CTk):
         self.progress_window.update()
 
     def convert_image(self, image_path, save_path, input_size=518):
-        if self.enhance_var or self.force_916:
-            tmp_directory = self.target_directory + "/tmp/"
+        save_directory = os.path.dirname(save_path)
+        if self.enhance_var.get() or self.force_916.get():
+            tmp_directory = save_directory + "/tmp/"
             if not os.path.exists(tmp_directory):
                 os.makedirs(tmp_directory)
             image = Image.open(image_path)
-            if self.enhance_var:
+            if self.enhance_var.get():
                 image = enhance_image(image)
-            if self.force_916:
+            if self.force_916.get():
                 width, height = image.size
                 # 计算9:16的目标高度
                 target_height = int(width * 16 / 9)
@@ -321,9 +322,9 @@ class ImageConverterApp(ctk.CTk):
             image_path = tmp_directory + os.path.splitext(os.path.basename(image_path))[0] + ".jpg"
             image.save(image_path, quality=90)
         gen_depth_image(image_path, save_path, input_size)
-        if self.save_interlaced_var:
+        if self.save_interlaced_var.get():
             config = load_config_yaml("tools/depth_config.yaml")
-            interlaced_directory = self.target_directory + "/interlaced/"
+            interlaced_directory = save_directory + "/interlaced/"
             if not os.path.exists(interlaced_directory):
                 os.makedirs(interlaced_directory)
             # 合并命令行参数覆盖yaml
