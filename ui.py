@@ -205,7 +205,7 @@ class ImageConverterApp(ctk.CTk):
             messagebox.showerror("错误", "请先选择源目录")
             return
         if self.target_dir_label.cget("text") == "点击选择目标目录":
-            self.target_directory = self.source_directory + "/output"
+            self.target_directory = self.source_directory + "/output/"
             if not os.path.exists(self.target_directory):
                 os.makedirs(self.target_directory)
             self.target_dir_label.configure(text=self.target_directory)
@@ -292,39 +292,45 @@ class ImageConverterApp(ctk.CTk):
         self.progress_window.update()
 
     def convert_image(self, image_path, save_path, input_size=518):
+        if self.enhance_var or self.force_916:
+            tmp_directory = self.target_directory + "/tmp/"
+            if not os.path.exists(tmp_directory):
+                os.makedirs(tmp_directory)
+            image = Image.open(image_path)
+            if self.enhance_var:
+                image = enhance_image(image)
+            if self.force_916:
+                width, height = image.size
+                # 计算9:16的目标高度
+                target_height = int(width * 16 / 9)
+                if target_height > height:
+                    # 如果目标高度大于原图高度，则以高度为基准，裁剪宽度
+                    target_width = int(height * 9 / 16)
+                    left = (width - target_width) // 2
+                    right = left + target_width
+                    top = 0
+                    bottom = height
+                    image = image.crop((left, top, right, bottom))
+                else:
+                    # 以宽度为基准，裁剪高度
+                    top = (height - target_height) // 2
+                    bottom = top + target_height
+                    left = 0
+                    right = width
+                    image = image.crop((left, top, right, bottom))
+            image_path = tmp_directory + os.path.splitext(os.path.basename(image_path))[0] + ".jpg"
+            image.save(image_path, quality=90)
         gen_depth_image(image_path, save_path, input_size)
         if self.save_interlaced_var:
             config = load_config_yaml("tools/depth_config.yaml")
-            if self.enhance_var or self.force_916:
-                image = Image.open(image_path)
-                if self.enhance_var:
-                    image = enhance_image(image)
-                if self.force_916:
-                    width, height = image.size
-                    # 计算9:16的目标高度
-                    target_height = int(width * 16 / 9)
-                    if target_height > height:
-                        # 如果目标高度大于原图高度，则以高度为基准，裁剪宽度
-                        target_width = int(height * 9 / 16)
-                        left = (width - target_width) // 2
-                        right = left + target_width
-                        top = 0
-                        bottom = height
-                        image = image.crop((left, top, right, bottom))
-                    else:
-                        # 以宽度为基准，裁剪高度
-                        top = (height - target_height) // 2
-                        bottom = top + target_height
-                        left = 0
-                        right = width
-                        image = image.crop((left, top, right, bottom))
-                image_path = 'tmp/' + os.path.basename(image_path)
-                image.save(image_path)
+            interlaced_directory = self.target_directory + "/interlaced/"
+            if not os.path.exists(interlaced_directory):
+                os.makedirs(interlaced_directory)
             # 合并命令行参数覆盖yaml
             params = dict(config)
             params['image_file'] = image_path
             params['depth_file'] = save_path
-            params['output_file'] = f"{os.path.splitext(save_path)[0]}_i.png"
+            params['output_file'] = interlaced_directory + f"{os.path.splitext(os.path.basename(image_path))[0]}.png"
             run_hologram_render(**params)
 
             
@@ -366,13 +372,5 @@ if __name__ == "__main__":
     model.load_state_dict(load_file(depth_path))
     model = model.to(DEVICE).eval().half()
 
-    if not os.path.exists('tmp'):
-        os.makedirs('tmp')
-
     app = ImageConverterApp()
     app.mainloop()
-
-    if os.path.exists('tmp'):
-        for file in os.listdir('tmp'):
-            os.remove(os.path.join('tmp', file))
-        os.rmdir('tmp')
