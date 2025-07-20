@@ -27,6 +27,7 @@ class ImageConverterApp(ctk.CTk):
         self.tabview.pack()
         self.image_converter_tab()
         self.mov_converter_tab()
+        self.batch_converter_tab()
 
     def image_converter_tab(self):
         self.tabview.add("图像转换")
@@ -34,33 +35,33 @@ class ImageConverterApp(ctk.CTk):
         self.tabview.tab("图像转换").rowconfigure(0, weight=1)
 
         # 左侧源图像展示框
-        self.left_frame = ctk.CTkFrame(self.tabview.tab("图像转换"), width=400, height=600)
-        self.left_frame.grid(row=0, column=0, padx=20, pady=20)
+        left_frame = ctk.CTkFrame(self.tabview.tab("图像转换"), width=400, height=600)
+        left_frame.grid(row=0, column=0, padx=20, pady=20)
         
-        self.source_image_preview = ctk.CTkLabel(self.left_frame, text="点击选择源图像", 
+        self.source_image_preview = ctk.CTkLabel(left_frame, text="点击选择源图像", 
                                                  width=400, height=200, bg_color="#202020", font=("黑体", 16))
         self.source_image_preview.pack()
         self.source_image_preview.bind("<Button-1>", self.select_source_image)
 
         # 右侧目标图像展示框
-        self.right_frame = ctk.CTkFrame(self.tabview.tab("图像转换"), width=400, height=600)
-        self.right_frame.grid(row=0, column=1, padx=20, pady=20)
+        right_frame = ctk.CTkFrame(self.tabview.tab("图像转换"), width=400, height=600)
+        right_frame.grid(row=0, column=1, padx=20, pady=20)
         
-        self.target_image_preview = ctk.CTkLabel(self.right_frame, text="请先选择源图像", 
+        self.target_image_preview = ctk.CTkLabel(right_frame, text="请先选择源图像", 
                                                  width=400, height=200, bg_color="#202020", font=("黑体", 16))
         self.target_image_preview.pack()
 
         # 底部转换按钮
-        self.convert_button = ctk.CTkButton(self.tabview.tab("图像转换"), text="转换", command=self.start_convert_image)
-        self.convert_button.grid(row=3, column=0, columnspan=2, pady=10)
+        convert_button = ctk.CTkButton(self.tabview.tab("图像转换"), text="转换", command=self.start_convert_image)
+        convert_button.grid(row=3, column=0, columnspan=2, pady=10)
 
         # 滑条拖到选择数值
         self.slider = ctk.CTkSlider(self.tabview.tab("图像转换"), from_=378, to=840, number_of_steps=33, 
                                     command=lambda x: self.slide_label.configure(text=int(x)))
         self.slider.set(518)
         self.slider.grid(row=1, column=0, columnspan=2)
-        self.slide_label = ctk.CTkLabel(self.tabview.tab("图像转换"), text=int(self.slider.get()))
-        self.slide_label.grid(row=2, column=0, columnspan=2)
+        slide_label = ctk.CTkLabel(self.tabview.tab("图像转换"), text=int(self.slider.get()))
+        slide_label.grid(row=2, column=0, columnspan=2)
 
         self.source_image_path = None
         
@@ -89,33 +90,33 @@ class ImageConverterApp(ctk.CTk):
         self.tabview.tab("视频转换").rowconfigure(0, weight=1)
 
         # 左侧源视频展示框
-        self.left_frame_video = ctk.CTkFrame(self.tabview.tab("视频转换"), width=400, height=600)
-        self.left_frame_video.grid(row=0, column=0, padx=20, pady=20)
+        left_frame_video = ctk.CTkFrame(self.tabview.tab("视频转换"), width=400, height=600)
+        left_frame_video.grid(row=0, column=0, padx=20, pady=20)
         
-        self.source_video_preview = ctk.CTkLabel(self.left_frame_video, text="点击选择源视频", 
+        self.source_video_preview = ctk.CTkLabel(left_frame_video, text="点击选择源视频", 
                                                  width=400, height=200, bg_color="#202020", font=("黑体", 16))
         self.source_video_preview.pack()
         self.source_video_preview.bind("<Button-1>", self.select_source_video)
 
         # 右侧目标视频展示框
-        self.right_frame_video = ctk.CTkFrame(self.tabview.tab("视频转换"), width=400, height=600)
-        self.right_frame_video.grid(row=0, column=1, padx=20, pady=20)
+        right_frame_video = ctk.CTkFrame(self.tabview.tab("视频转换"), width=400, height=600)
+        right_frame_video.grid(row=0, column=1, padx=20, pady=20)
 
-        self.target_video_preview = ctk.CTkLabel(self.right_frame_video, text="请先选择源视频", 
+        self.target_video_preview = ctk.CTkLabel(right_frame_video, text="请先选择源视频", 
                                                  width=400, height=200, bg_color="#202020", font=("黑体", 16))
         self.target_video_preview.pack()
 
         # 底部转换按钮
-        self.convert_video_button = ctk.CTkButton(self.tabview.tab("视频转换"), text="转换", command=self.start_convert_video)
-        self.convert_video_button.grid(row=3, column=0, columnspan=2, pady=10)
+        convert_video_button = ctk.CTkButton(self.tabview.tab("视频转换"), text="转换", command=self.start_convert_video)
+        convert_video_button.grid(row=3, column=0, columnspan=2, pady=10)
 
         # 滑条拖到选择数值
         self.video_slider = ctk.CTkSlider(self.tabview.tab("视频转换"), from_=378, to=840, number_of_steps=33, 
                                           command=lambda x: self.video_slide_label.configure(text=int(x)))
         self.video_slider.set(518)
         self.video_slider.grid(row=1, column=0, columnspan=2)
-        self.video_slide_label = ctk.CTkLabel(self.tabview.tab("视频转换"), text=int(self.video_slider.get()))
-        self.video_slide_label.grid(row=2, column=0, columnspan=2)
+        video_slide_label = ctk.CTkLabel(self.tabview.tab("视频转换"), text=int(self.video_slider.get()))
+        video_slide_label.grid(row=2, column=0, columnspan=2)
 
         self.source_video_path = None
 
@@ -162,6 +163,91 @@ class ImageConverterApp(ctk.CTk):
         self.progressbar.set(current/total*100)
         self.progressbar.update()
     
+    def select_source_directory(self, event):
+        directory = filedialog.askdirectory(title="选择源目录")
+        if directory:
+            self.source_directory = directory
+            # 显示完整路径，和当前目录下的图片数量
+            source_dir_info = f"{directory} \n ({len(os.listdir(directory))} files)"
+            self.source_dir_label.configure(text=source_dir_info)
+    
+    def select_target_directory(self, event):
+        directory = filedialog.askdirectory(title="选择目标目录")
+        if directory:
+            self.target_directory = directory
+            self.target_dir_label.configure(text=directory)
+
+
+    def start_convert_batch(self):
+        if not self.source_directory:
+            messagebox.showerror("错误", "请先选择源目录")
+            return
+        if self.target_dir_label.cget("text") == "点击选择目标目录":
+            self.target_directory = self.source_directory + "/output"
+            if not os.path.exists(self.target_directory):
+                os.makedirs(self.target_directory)
+            self.target_dir_label.configure(text=self.target_directory)
+
+        self.show_progress_window()
+        self.progressbar.configure(determinate_speed=50.0/len(os.listdir(self.source_directory)))
+        self.progress_callback(0, 100)
+
+        for file in os.listdir(self.source_directory):
+            file_path = os.path.join(self.source_directory, file)
+            if os.path.isfile(file_path) and file.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp')):
+                target_file_path = os.path.join(self.target_directory, f"{os.path.splitext(file)[0]}_depth.png")
+                convert_image(file_path, target_file_path, input_size=int(self.batch_slider.get()))
+                self.progressbar.step()
+                self.progressbar.update()
+
+        self.progress_callback(100, 100)
+        self.progress_window.destroy()
+        messagebox.showinfo("提示", "批量转换完成！")
+
+    def batch_converter_tab(self):
+        self.tabview.add("批量转换")
+        self.tabview.tab("批量转换").columnconfigure((0,1), weight=1)
+        self.tabview.tab("批量转换").rowconfigure(0, weight=1)
+
+        # 左侧源目录选择框
+        left_frame_batch = ctk.CTkFrame(self.tabview.tab("批量转换"), width=400, height=600)
+        left_frame_batch.grid(row=0, column=0, padx=20, pady=20)
+        
+        source_dir_label_name = ctk.CTkLabel(left_frame_batch, text="源目录")
+        source_dir_label_name.pack()
+
+        self.source_dir_label = ctk.CTkLabel(left_frame_batch, text="点击选择源目录", 
+                                             width=400, height=200, bg_color="#202020", font=("黑体", 16))
+        self.source_dir_label.pack()
+        self.source_dir_label.bind("<Button-1>", self.select_source_directory)
+
+        # 右侧目标目录选择框
+        right_frame_batch = ctk.CTkFrame(self.tabview.tab("批量转换"), width=400, height=600)
+        right_frame_batch.grid(row=0, column=1, padx=20, pady=20)
+
+        target_dir_label_name = ctk.CTkLabel(right_frame_batch, text="目标目录")
+        target_dir_label_name.pack()
+
+        self.target_dir_label = ctk.CTkLabel(right_frame_batch, text="点击选择目标目录", 
+                                             width=400, height=200, bg_color="#202020", font=("黑体", 16))
+        self.target_dir_label.pack()
+        self.target_dir_label.bind("<Button-1>", self.select_target_directory)
+
+        # 底部转换按钮
+        convert_batch_button = ctk.CTkButton(self.tabview.tab("批量转换"), text="转换", command=self.start_convert_batch)
+        convert_batch_button.grid(row=4, column=0, columnspan=2, pady=10)
+
+        # 滑条拖到选择数值
+        self.batch_slider = ctk.CTkSlider(self.tabview.tab("批量转换"), from_=378, to=840, number_of_steps=33,
+                                          command=lambda x: self.batch_slide_label.configure(text=int(x)))
+        self.batch_slider.set(518)
+        self.batch_slider.grid(row=2, column=0, columnspan=2)
+        batch_slide_label = ctk.CTkLabel(self.tabview.tab("批量转换"), text=int(self.batch_slider.get()))
+        batch_slide_label.grid(row=3, column=0, columnspan=2)
+
+        self.source_directory = None
+
+
     def show_progress_window(self):
         self.progress_window = ctk.CTkToplevel(self)
         self.progress_window.title("处理中")
@@ -179,7 +265,7 @@ def convert_image(image_path, save_path, input_size=518):
     depth_normalized = cv2.normalize(depth, None, 0, 255, cv2.NORM_MINMAX)
     depth_normalized = depth_normalized.astype(np.uint8)
 
-    cv2.imencode('.jpg', depth_normalized)[1].tofile(save_path)
+    cv2.imencode('.png', depth_normalized)[1].tofile(save_path)
 
 def enhance_image(image, input_size=518):
     # 提高image饱和度30%
