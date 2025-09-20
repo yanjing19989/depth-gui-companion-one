@@ -13,8 +13,8 @@ scale_x: 1.0
 scale_y: 1.0
 offset_x: 0.0
 offset_y: 0.0
-blur_size: 10.0
-blur_depth: 0.0
+blur_size: 5.0
+blur_depth: 0.25
 depth_image_blur_size: 50.0
 border_color: "#FFFFFF"
 border_size_x: 0.02
