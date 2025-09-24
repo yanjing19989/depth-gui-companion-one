@@ -83,8 +83,8 @@ class ImageConverterApp(ctk.CTk):
                                     command=lambda x: self.slide_label.configure(text=int(x)))
         self.slider.set(518)
         self.slider.grid(row=2, column=0, columnspan=2)
-        slide_label = ctk.CTkLabel(self.tabview.tab("图像转换"), text=int(self.slider.get()))
-        slide_label.grid(row=3, column=0, columnspan=2)
+        self.slide_label = ctk.CTkLabel(self.tabview.tab("图像转换"), text=int(self.slider.get()))
+        self.slide_label.grid(row=3, column=0, columnspan=2)
 
         self.source_image_path = None
         
@@ -138,8 +138,8 @@ class ImageConverterApp(ctk.CTk):
                                           command=lambda x: self.video_slide_label.configure(text=int(x)))
         self.video_slider.set(518)
         self.video_slider.grid(row=1, column=0, columnspan=2)
-        video_slide_label = ctk.CTkLabel(self.tabview.tab("视频转换"), text=int(self.video_slider.get()))
-        video_slide_label.grid(row=2, column=0, columnspan=2)
+        self.video_slide_label = ctk.CTkLabel(self.tabview.tab("视频转换"), text=int(self.video_slider.get()))
+        self.video_slide_label.grid(row=2, column=0, columnspan=2)
 
         self.source_video_path = None
 
@@ -276,8 +276,8 @@ class ImageConverterApp(ctk.CTk):
                                           command=lambda x: self.batch_slide_label.configure(text=int(x)))
         self.batch_slider.set(518)
         self.batch_slider.grid(row=2, column=0, columnspan=2)
-        batch_slide_label = ctk.CTkLabel(self.tabview.tab("批量转换"), text=int(self.batch_slider.get()))
-        batch_slide_label.grid(row=3, column=0, columnspan=2)
+        self.batch_slide_label = ctk.CTkLabel(self.tabview.tab("批量转换"), text=int(self.batch_slider.get()))
+        self.batch_slide_label.grid(row=3, column=0, columnspan=2)
 
         self.source_directory = None
 
